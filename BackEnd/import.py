@@ -100,6 +100,7 @@ def sync_data():
                fir_status=fir_status, victim_name=victim_name, bail_details=bail_details,
                bail_grant_date=bail_grant_date, trial_progress=trial_progress)
 
+
     def update_related_persons(tx, person_id, name, date_of_birth, criminal_id, relationship):
         query = """
             MERGE (r:Person {person_id: $person_id})

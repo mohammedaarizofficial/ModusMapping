@@ -76,12 +76,10 @@ def push_to_neo4j():
                     modus_operandi: $mo_id, 
                     bail_id: $bail_id, 
                     trial_progress_id: $trial_id,
-<<<<<<< HEAD
-                    type:$type
-                    
-=======
                     type: $type
 >>>>>>> b38377d (deletes before sync)
+=======
+>>>>>>> fdab5247d827034fe7df2b02cc0b4ad0ece18d93
                 })
             """, id=crime[0], date=str(crime[1]), location=crime[2], area=crime[3],
                 fir_no=crime[0], mo_id=crime[0], bail_id=crime[0], trial_id=crime[0], type=crime[4])
