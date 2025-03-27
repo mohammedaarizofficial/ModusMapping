@@ -3,18 +3,18 @@ import psycopg2
 # neo4j_db_name="modusmapping DBMS"
 # PostgreSQL Configuration
 PG_CONFIG = {
-    "dbname": "modusmapping",
+    "dbname": "postgres",
     "user": "postgres",
-    "password": "lakshay",
+    "password": "Aariz13518",
     "host": "localhost",
-    "port": 5432
+    "port": 1351
 }
 
 # Neo4j Configuration
 NEO4J_CONFIG = {
-    "uri": "bolt://localhost:7687",
+    "uri": "bolt://localhost:7689",
     "user": "neo4j",
-    "password": "lakshay1406"
+    "password": "Aariz13518"
 }
 
 def fetch_postgres_data():
@@ -32,7 +32,8 @@ def fetch_postgres_data():
         "trial_progress": "SELECT crime_id, trial_progress FROM crime;",
         "areas": "SELECT DISTINCT area FROM crime;",
         "cc_mapping": "SELECT crime_id, criminal_id FROM cc_mapping;",
-        "related_to": "SELECT person_id, criminal_id, name, relationship, date_of_birth FROM related_to;"
+        "related_to": "SELECT person_id, criminal_id, relationship FROM related_to;",
+        "person":" SELECT person_id,name,date_of_birth FROM persons;"
     }
 
     data = {key: [] for key in queries}
@@ -43,7 +44,7 @@ def fetch_postgres_data():
 
     cur.close()
     conn.close()
-    print(data["fir"])
+    # print(data["fir"])
     return data
 
 
@@ -53,6 +54,10 @@ def push_to_neo4j():
     data = fetch_postgres_data()
 
     with driver.session() as session:
+        # ❌ Delete all nodes and relationships
+        session.run("MATCH (n) DETACH DELETE n;")
+        print("🗑️ Deleted all existing nodes and relationships.")
+
         # Insert Criminals
         for criminal in data["criminals"]:
             session.run("""
@@ -60,7 +65,6 @@ def push_to_neo4j():
             """, id=criminal[0], name=criminal[1], dob=str(criminal[2]), uid=criminal[3])
 
         # Insert Crimes
-        # Insert Crimes (with missing fields)
         for crime in data["crimes"]:
             session.run("""
                 CREATE (:Crime {
@@ -72,11 +76,15 @@ def push_to_neo4j():
                     modus_operandi: $mo_id, 
                     bail_id: $bail_id, 
                     trial_progress_id: $trial_id,
+<<<<<<< HEAD
                     type:$type
+                    
+=======
+                    type: $type
+>>>>>>> b38377d (deletes before sync)
                 })
             """, id=crime[0], date=str(crime[1]), location=crime[2], area=crime[3],
-                fir_no=crime[0], mo_id=crime[0], bail_id=crime[0], trial_id=crime[0],type=crime[4])  
-
+                fir_no=crime[0], mo_id=crime[0], bail_id=crime[0], trial_id=crime[0], type=crime[4])
 
         # Insert Crime Types
         for ctype in data["crime_types"]:
@@ -115,16 +123,20 @@ def push_to_neo4j():
                 CREATE (c)-[:COMMITTED]->(cr)
             """, criminal_id=mapping[1], crime_id=mapping[0])
 
+        
         # Insert Related People
-        for person in data["related_to"]:
+        for person in data["person"]:
             session.run("""
-                CREATE (:Person {id: $id, name: $name, date_of_birth: $dob})
-            """, id=person[0], name=person[2], dob=str(person[4]))
+                MERGE (p:Person {id: $id})
+                SET p.name = $name, p.date_of_birth = $dob
+            """, id=person[0], name=person[1], dob=str(person[2]) if person[2] else None)
 
+        #connections between related people
+        for relation in data["related_to"]:
             session.run("""
                 MATCH (c:Criminal {id: $criminal_id}), (p:Person {id: $id})
-                CREATE (p)-[:RELATED_TO {relationship: $relationship}]->(c)
-            """, criminal_id=person[1], id=person[0], relationship=person[3])
+                MERGE (p)-[:RELATED_TO {relationship: $relationship}]->(c)
+            """, criminal_id=relation[1], id=relation[0], relationship=relation[2])
 
         # Create relationships for Crime nodes
         session.run("""

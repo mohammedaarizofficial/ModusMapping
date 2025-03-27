@@ -1,174 +1,133 @@
 import psycopg2
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from neo4j import GraphDatabase
-import ollama
-import time
-import threading
 
 # PostgreSQL Connection
 pg_conn = psycopg2.connect(
-    dbname="ModusMapping",
+    dbname="postgres",
     user="postgres",
-    password="Aariz13518",  # Replace with your actual password
+    password="Aariz13518",  # Replace with actual password
     host="localhost",
     port="1351"
 )
-pg_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 pg_cursor = pg_conn.cursor()
 
 # Neo4j Connection
 neo4j_uri = "bolt://localhost:7689"
 neo4j_user = "neo4j"
-neo4j_password = "Aariz13518"  # Replace with your actual password
+neo4j_password = "Aariz13518"
 neo4j_driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
 
-# Listen for changes in PostgreSQL
-pg_cursor.execute("LISTEN modus_mapping_changes;")  # The trigger will send notifications here
-
-# Function to sync data from PostgreSQL to Neo4j
 def sync_data():
     print("🔄 Syncing data from PostgreSQL to Neo4j...")
 
-    # Fetch updated data from PostgreSQL
-    pg_cursor.execute("SELECT criminal_name, age, date_of_crime, modus_operandi, related_to, location_crime FROM modus_mapping;")
-    rows = pg_cursor.fetchall()
+    # Fetch Criminals and Crimes
+    pg_cursor.execute("""
+        SELECT 
+            cp.id AS criminal_id, 
+            cp.name AS criminal_name, 
+            cp.date_of_birth, 
+            cp.unique_identification,
+            c.crime_id, 
+            c.date AS crime_date, 
+            c.location, 
+            c.area, 
+            c.type AS crime_type, 
+            c.modus_operandi, 
+            c.fir_no, 
+            c.fir_status, 
+            c.victim_name, 
+            c.bail_details, 
+            c.bail_grant_date, 
+            c.trial_progress
+        FROM criminal_person cp
+        JOIN cc_mapping ccm ON cp.id = ccm.criminal_id
+        JOIN crime c ON ccm.crime_id = c.crime_id;
+    """)
+    crimes = pg_cursor.fetchall()
 
-    # Get existing Neo4j criminals
-    def get_neo4j_criminals(tx):
-        query = "MATCH (c:Criminal) RETURN c.name"
-        result = tx.run(query)
-        return {record["c.name"] for record in result}
+    # Fetch Related Persons
+    pg_cursor.execute("""
+        SELECT 
+            r.person_id, r.name, r.date_of_birth, 
+            r.relationship, r.criminal_id 
+        FROM related_to r;
+    """)
+    related_people = pg_cursor.fetchall()
 
-    with neo4j_driver.session() as session:
-        neo4j_criminals = session.execute_read(get_neo4j_criminals)
-
-    # Prepare a set of PostgreSQL criminal names
-    postgres_criminals = {row[0] for row in rows}
-
-    # Delete criminals that are no longer in PostgreSQL
-    to_delete = neo4j_criminals - postgres_criminals
-    def delete_criminal(tx, criminal_name):
-        query = "MATCH (c:Criminal {name: $criminal_name}) DETACH DELETE c"
-        tx.run(query, criminal_name=criminal_name)
-
-    with neo4j_driver.session() as session:
-        for criminal in to_delete:
-            session.execute_write(delete_criminal, criminal)
-            print(f"🗑️ Deleted {criminal} from Neo4j")
-
-    # Insert or Update data in Neo4j
-    def update_neo4j(tx, criminal_name, age, date_of_crime, modus_operandi, related_to, location_crime):
+    # Insert data into Neo4j
+    def update_neo4j(tx, criminal_id, criminal_name, date_of_birth, unique_id,
+                     crime_id, crime_date, location, area, crime_type, modus_operandi,
+                     fir_no, fir_status, victim_name, bail_details, bail_grant_date, trial_progress):
         query = """
-            MERGE (c:Criminal {name: $criminal_name})
-            SET c.age = $age, 
-                c.date_of_crime = $date_of_crime, 
-                c.modus_operandi = $modus_operandi, 
-                c.location_crime = $location_crime
+            MERGE (c:Criminal {id: $criminal_id})
+            SET c.name = $criminal_name, 
+                c.date_of_birth = $date_of_birth,
+                c.unique_identification = $unique_id
+            
+            MERGE (cr:Crime {id: $crime_id})
+            SET cr.date = $crime_date, 
+                cr.location = $location, 
+                cr.area = $area,
+                cr.type = $crime_type, 
+                cr.modus_operandi = $modus_operandi
+
+            MERGE (c)-[:COMMITTED]->(cr)
+
+            MERGE (a:Area {name: $area})
+            MERGE (cr)-[:OCCURRED_IN]->(a)
+
+            MERGE (t:CrimeType {type: $crime_type})
+            MERGE (cr)-[:HAS_TYPE]->(t)
+
+            MERGE (m:ModusOperandi {description: $modus_operandi})
+            MERGE (cr)-[:HAS_MODUS_OPERANDI]->(m)
+
+            MERGE (f:FIR {fir_no: $fir_no})
+            SET f.fir_status = $fir_status, f.victim_name = $victim_name
+            MERGE (cr)-[:HAS_FIR]->(f)
+
+            MERGE (b:Bail {id: $crime_id})  // Bail linked to crime
+            SET b.bail_details = $bail_details, b.bail_grant_date = $bail_grant_date
+            MERGE (f)-[:HAS_BAIL]->(b)
+
+            MERGE (tp:TrialProgress {id: $crime_id})  // Trial progress linked to crime
+            SET tp.progress_details = $trial_progress
+            MERGE (f)-[:HAS_TRIAL_PROGRESS]->(tp);
         """
-        tx.run(query, 
-            criminal_name=criminal_name, 
-            age=age, 
-            date_of_crime=date_of_crime, 
-            modus_operandi=modus_operandi, 
-            location_crime=location_crime)
+        tx.run(query, criminal_id=criminal_id, criminal_name=criminal_name, date_of_birth=date_of_birth,
+               unique_id=unique_id, crime_id=crime_id, crime_date=crime_date, location=location,
+               area=area, crime_type=crime_type, modus_operandi=modus_operandi, fir_no=fir_no,
+               fir_status=fir_status, victim_name=victim_name, bail_details=bail_details,
+               bail_grant_date=bail_grant_date, trial_progress=trial_progress)
 
-        # Ensure relationships are created even if related_to is missing
-        if related_to:
-            rel_query = """
-                MERGE (c1:Criminal {name: $criminal_name})
-                MERGE (c2:Criminal {name: $related_to})
-                MERGE (c1)-[:RELATED_TO]->(c2)
-            """
-            tx.run(rel_query, criminal_name=criminal_name, related_to=related_to)
-
-
-    with neo4j_driver.session() as session:
-        for row in rows:
-            session.execute_write(update_neo4j, row[0], row[1], row[2], row[3], row[4], row[5])
-
-    print("✅ Crime Data Sync Completed! 🚀")
-
-# Function to listen for database changes
-def listen_for_changes():
-    print("🔊 Listening for database changes...")
-    while True:
-        pg_conn.poll()
-        while pg_conn.notifies:
-            notify = pg_conn.notifies.pop(0)
-            print(f"📢 Change detected: {notify.payload}")
-            sync_data()
-
-# Function to get a criminal's details from Neo4j
-def get_criminal_details(criminal_name):
-    with neo4j_driver.session() as session:
+    def update_related_persons(tx, person_id, person_name, date_of_birth, criminal_id, relationship):
         query = """
-        MATCH (c:Criminal {name: $criminal_name})
-        OPTIONAL MATCH (c)-[:RELATED_TO]->(r:Criminal)
-        RETURN c.name AS name, c.age AS age, c.date_of_crime AS date_of_crime, 
-               c.modus_operandi AS modus_operandi, c.location_crime AS location_crime,
-               COLLECT(r.name) AS related_criminals
+            MATCH (c:Criminal {id: $criminal_id}) 
+            SET c.name = $person_name
+            WITH c
+            MATCH (p:Person {person_id: $person_id})
+            SET p.date_of_birth = $date_of_birth
+            MERGE (p)-[:RELATED_TO {relationship: $relationship}]->(c)
         """
-        result = session.run(query, criminal_name=criminal_name)
-        record = result.single()
-        
-        if record:
-            return {
-                "name": record["name"],
-                "age": record["age"],
-                "date_of_crime": record["date_of_crime"],
-                "modus_operandi": record["modus_operandi"],
-                "location_crime": record["location_crime"],
-                "related_criminals": [r for r in record["related_criminals"] if r]  # Remove None values
-            }
-        else:
-            return None
+        tx.run(query, person_id=person_id, person_name=person_name, date_of_birth=date_of_birth,
+            criminal_id=criminal_id, relationship=relationship)
 
 
-# Function to summarize criminal details using Ollama
-def summarize_criminal(criminal_name):
-    details = get_criminal_details(criminal_name)
-    
-    if not details:
-        return f"No records found for {criminal_name}."
 
-    related = ", ".join(details["related_criminals"]) if details["related_criminals"] else "None"
+    with neo4j_driver.session() as session:
+        for crime in crimes:
+            session.execute_write(update_neo4j, *crime)
 
-    prompt = f"""
-    Based on the following criminal record, generate an analytical summary in a natural and professional tone:
-    
-    Name: {details['name']}
-    Age: {details['age']}
-    Date of Crime: {details['date_of_crime']}
-    Modus Operandi: {details['modus_operandi']}
-    Location of Crime: {details['location_crime']}
-    Related Individuals: {related}
-    
-    The summary should provide insights into the criminal's behavior, potential connections, and any notable patterns observed. Keep it concise but informative.
-    """
+        for person in related_people:
+            session.execute_write(update_related_persons, *person)
 
-    response = ollama.chat(model="llama3", messages=[{"role": "user", "content": prompt}])
-    
-    return response['message']['content']
+    print("✅ Data Sync Completed! 🚀")
 
-
-# Example: Search for a criminal and generate summary
 if __name__ == "__main__":
-    listener_thread = threading.Thread(target=listen_for_changes, daemon=True)
-    listener_thread.start()
+    sync_data()
+    print("Go to Neo4j Browser: http://localhost:7474/")
 
-    try:
-        while True:
-            name = input("\nEnter the criminal's name to search: ").strip()
-            if name:
-                summary = summarize_criminal(name)
-                print("\n🔍 Criminal Summary:\n")
-                print(summary)
-            else:
-                print("❌ Please enter a valid name.")
-    except KeyboardInterrupt:
-        print("\n❌ Server stopped.")
-
-    # Cleanup
-    pg_cursor.close()
-    pg_conn.close()
-    neo4j_driver.close()
+# Cleanup
+pg_cursor.close()
+pg_conn.close()
+neo4j_driver.close()
