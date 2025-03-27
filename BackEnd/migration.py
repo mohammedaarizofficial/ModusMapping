@@ -32,7 +32,8 @@ def fetch_postgres_data():
         "trial_progress": "SELECT crime_id, trial_progress FROM crime;",
         "areas": "SELECT DISTINCT area FROM crime;",
         "cc_mapping": "SELECT crime_id, criminal_id FROM cc_mapping;",
-        "related_to": "SELECT person_id, criminal_id, name, relationship, date_of_birth FROM related_to;"
+        "related_to": "SELECT person_id, criminal_id, relationship FROM related_to;",
+        "person":" SELECT person_id,name,date_of_birth FROM persons;"
     }
 
     data = {key: [] for key in queries}
@@ -43,7 +44,7 @@ def fetch_postgres_data():
 
     cur.close()
     conn.close()
-    print(data["fir"])
+    # print(data["fir"])
     return data
 
 
@@ -73,6 +74,7 @@ def push_to_neo4j():
                     bail_id: $bail_id, 
                     trial_progress_id: $trial_id,
                     type:$type
+                    
                 })
             """, id=crime[0], date=str(crime[1]), location=crime[2], area=crime[3],
                 fir_no=crime[0], mo_id=crime[0], bail_id=crime[0], trial_id=crime[0],type=crime[4])  
@@ -115,16 +117,20 @@ def push_to_neo4j():
                 CREATE (c)-[:COMMITTED]->(cr)
             """, criminal_id=mapping[1], crime_id=mapping[0])
 
+        
         # Insert Related People
-        for person in data["related_to"]:
+        for person in data["person"]:
             session.run("""
-                CREATE (:Person {id: $id, name: $name, date_of_birth: $dob})
-            """, id=person[0], name=person[2], dob=str(person[4]))
+                MERGE (p:Person {id: $id})
+                SET p.name = $name, p.date_of_birth = $dob
+            """, id=person[0], name=person[1], dob=str(person[2]) if person[2] else None)
 
+        #connections between related people
+        for relation in data["related_to"]:
             session.run("""
                 MATCH (c:Criminal {id: $criminal_id}), (p:Person {id: $id})
-                CREATE (p)-[:RELATED_TO {relationship: $relationship}]->(c)
-            """, criminal_id=person[1], id=person[0], relationship=person[3])
+                MERGE (p)-[:RELATED_TO {relationship: $relationship}]->(c)
+            """, criminal_id=relation[1], id=relation[0], relationship=relation[2])
 
         # Create relationships for Crime nodes
         session.run("""
