@@ -1,20 +1,26 @@
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 from neo4j import GraphDatabase
 import psycopg2
 # neo4j_db_name="modusmapping DBMS"
 # PostgreSQL Configuration
 PG_CONFIG = {
-    "dbname": "postgres",
+    "dbname": os.getenv("PG_DATABASE"),
     "user": "postgres",
-    "password": "Aariz13518",
+    "password": os.getenv("PG_PASSWORD"),
     "host": "localhost",
-    "port": 1351
+    "port": os.getenv("PG_PORT")
 }
 
 # Neo4j Configuration
 NEO4J_CONFIG = {
-    "uri": "bolt://localhost:7689",
+    "uri": "bolt://localhost:"+os.getenv("NEO4J_PORT"),
     "user": "neo4j",
-    "password": "Aariz13518"
+    "password": os.getenv("NEO4J_PASSWORD"),
 }
 
 def fetch_postgres_data():
@@ -77,9 +83,6 @@ def push_to_neo4j():
                     bail_id: $bail_id, 
                     trial_progress_id: $trial_id,
                     type: $type
->>>>>>> b38377d (deletes before sync)
-=======
->>>>>>> fdab5247d827034fe7df2b02cc0b4ad0ece18d93
                 })
             """, id=crime[0], date=str(crime[1]), location=crime[2], area=crime[3],
                 fir_no=crime[0], mo_id=crime[0], bail_id=crime[0], trial_id=crime[0], type=crime[4])
