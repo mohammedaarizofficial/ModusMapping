@@ -100,17 +100,24 @@ def sync_data():
                fir_status=fir_status, victim_name=victim_name, bail_details=bail_details,
                bail_grant_date=bail_grant_date, trial_progress=trial_progress)
 
-    def update_related_persons(tx, person_id, person_name, date_of_birth, criminal_id, relationship):
+    def update_related_persons(tx, person_id, name, date_of_birth, criminal_id, relationship):
         query = """
-            MATCH (c:Criminal {id: $criminal_id}) 
-            SET c.name = $person_name
-            WITH c
-            MATCH (p:Person {person_id: $person_id})
-            SET p.date_of_birth = $date_of_birth
-            MERGE (p)-[:RELATED_TO {relationship: $relationship}]->(c)
+            MERGE (r:Person {person_id: $person_id})
+SET r.name = $name, r.date_of_birth = $date_of_birth
+WITH r  // Ensure r is passed to the next step
+
+MATCH (c:Criminal {id: $criminal_id})  
+WITH r, c
+MERGE (r)-[rel:RELATED_TO]->(c)
+RETURN r, c, rel
+
         """
-        tx.run(query, person_id=person_id, person_name=person_name, date_of_birth=date_of_birth,
+        tx.run(query, person_id=person_id, name=name, date_of_birth=date_of_birth,
             criminal_id=criminal_id, relationship=relationship)
+
+
+
+
 
 
 
