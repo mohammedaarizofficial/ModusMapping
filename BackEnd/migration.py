@@ -138,11 +138,11 @@ def sync_neo4j():
 
         
         # Insert Related People
-        for person in data["person"]:
-            session.run("""
-                MERGE (p:Person {id: $id})
-                SET p.name = $name, p.date_of_birth = $dob
-            """, id=person[0], name=person[1], dob=str(person[2]) if person[2] else None)
+        # for person in data["person"]:
+        #     session.run("""
+        #         MERGE (p:Person {id: $id})
+        #         SET p.name = $name, p.date_of_birth = $dob
+        #     """, id=person[0], name=person[1], dob=str(person[2]) if person[2] else None)
 
         #connections between related people
         for relation in data["related_to"]:
