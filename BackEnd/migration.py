@@ -138,11 +138,11 @@ def sync_neo4j():
 
         
         # Insert Related People
-        # for person in data["person"]:
-        #     session.run("""
-        #         MERGE (p:Person {id: $id})
-        #         SET p.name = $name, p.date_of_birth = $dob
-        #     """, id=person[0], name=person[1], dob=str(person[2]) if person[2] else None)
+        for person in data["person"]:
+            session.run("""
+                MERGE (p:Person {id: $id})
+                SET p.name = $name, p.date_of_birth = $dob
+            """, id=person[0], name=person[1], dob=str(person[2]) if person[2] else None)
 
         #connections between related people
         for relation in data["related_to"]:
@@ -150,7 +150,7 @@ def sync_neo4j():
                 MATCH (c:Criminal {id: $criminal_id}), (p:Person {id: $person_id})
                 SET p.relationship = $relationship
                 MERGE (c)-[:RELATED_TO {relationship: $relationship}]->(p)
-            """, criminal_id=relation[0], person_id=relation[1], relationship=relation[2])
+            """, criminal_id=relation[1], person_id=relation[0], relationship=relation[2])
 
 
         # Create relationships for Crime nodes
