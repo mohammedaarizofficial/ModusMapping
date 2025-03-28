@@ -1,32 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Police Criminal Record Entry</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Criminal & Crime</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        function addPersonField() {
+            const container = document.getElementById("peopleContainer");
+
+            const div = document.createElement("div");
+            div.classList.add("person-entry");
+
+            div.innerHTML = `
+                <label>Name: <input type="text" name="personName[]" required></label>
+                <label>Date Of Birth: <input type="date" name="personDob[]" required></label>
+                <label>Relationship: <input type="text" name="relation[]" required></label>
+                <button type="button" onclick="removePersonField(this)">Remove</button>
+                <br><br>
+            `;
+
+            container.appendChild(div);
+        }
+
+        function removePersonField(button) {
+            button.parentElement.remove();
+        }
+
+        function submitCriminal(event) {
+            event.preventDefault();
+
+            const formData = new FormData(document.getElementById("criminalForm"));
+            
+            let criminalData = {
+                name: formData.get("name"),
+                dob: formData.get("dob"),
+                description: formData.get("description"),
+                uniqueIdentifier: formData.get("uniqueIdentifier"),
+                firNumber: formData.get("firNumber"),
+                people: []
+            };
+
+            // Gather people details
+            const personNames = formData.getAll("personName[]");
+            const personDobs = formData.getAll("personDob[]");
+            const relations = formData.getAll("relation[]");
+
+            for (let i = 0; i < personNames.length; i++) {
+                criminalData.people.push({
+                    personName: personNames[i],
+                    personDob: personDobs[i],
+                    relation: relations[i]
+                });
+            }
+            console.log(criminalData);
+            document.getElementById("criminalForm").reset();
+            document.getElementById("peopleContainer").innerHTML = "";
+            fetch("/add-criminal", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(criminalData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Criminal & Related People added successfully!");
+                } else {
+                    alert("Error adding data: " + data.error);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function submitCrime(event) {
+            event.preventDefault();
+
+            const formData = new FormData(document.getElementById("criminalForm"));
+
+            let crimeData = {
+               
+                type: formData.get("crimeType"),
+                location: formData.get("crimeLocation"),
+                area: formData.get("area"),
+                date: formData.get("crimeDate"),
+                status: formData.get("crimeStatus"),
+                modusOperandi: formData.get("modusOperandi"),
+                firNumber: formData.get("crimeFirNumber"),
+                bailDetails: formData.get("bailDetails"),
+                bailGrantDate: formData.get("bailGrantDate"),
+                progress: formData.get("progress"),
+                victimDetails: formData.get("victimDetails")
+            };
+            console.log(crimeData);
+            document.getElementById("criminalForm").reset();
+            fetch("/add-crime", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(crimeData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Crime details added successfully!");
+                } else {
+                    alert("Error adding data: " + data.error);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
 </head>
 <body>
-  <h1>Enter Criminal Details</h1>
-  <form action="/add-criminal" method="post">
-    <input type="text" name="name" placeholder="Name" required />
-    <input type="number" name="age" placeholder="Age" required />
-    <input type="text" name="description" placeholder="Description" />
-    <input type="text" name="uniqueIdentifier" placeholder="Unique Identifier" required />
-    <button type="submit">Add Criminal</button>
-  </form>
+    <h2>Add Criminal & Crime Record</h2>
+    <form id="criminalForm">
+        <h3>Criminal Details</h3>
+        <label>Name: <input type="text" name="name" required></label><br>
+        <label>Date Of Birth: <input type="date" name="dob"></label><br>
+        <label>Description: <input type="text" name="description" required></label><br>
+        <label>Unique Identifier: <input type="text" name="uniqueIdentifier" required></label><br>
+        <label>FIR Number: <input type="text" name="firNumber" required></label><br>
+        <h3>Related People</h3>
+        <div id="peopleContainer"></div>
+        <button type="button" onclick="addPersonField()">Add Person</button><br><br>
 
-  <h2>Enter Crime Details</h2>
-  <form action="/add-crime" method="post">
-    <input type="text" name="crimeId" placeholder="Crime ID" required />
-    <input type="number" name="criminalId" placeholder="Criminal ID" required />
-    <input type="text" name="type" placeholder="Crime Type" required />
-    <input type="text" name="location" placeholder="Location" />
-    <input type="text" name="status" placeholder="Status (Active/Closed)" />
-    <input type="text" name="firNumber" placeholder="FIR Number" />
-    <input type="text" name="bailDetails" placeholder="Bail Details" />
-    <input type="date" name="bailGrantDate" placeholder="Bail Grant Date" />
-    <input type="text" name="progress" placeholder="Progress of Trial" />
-    <input type="text" name="victimDetails" placeholder="Victim Details" />
-    <button type="submit">Add Crime</button>
-  </form>
+        <button type="submit" onclick="submitCriminal(event)">Submit Criminal & Related People</button>
+        <hr>
+
+        <h3>Crime Details</h3>
+        <!-- <label>Crime ID: <input type="text" name="crimeId" required></label><br> -->
+        <label>Type: <input type="text" name="crimeType" required></label><br>
+        <label>Location: <input type="text" name="crimeLocation" required></label><br>
+        <label>Area: <input type="text" name="area" required></label><br>
+        <label>Crime Date: <input type="date" name="crimeDate"></label><br>
+        <label>Status: 
+            <select name="crimeStatus">
+                <option value="Active">Active</option>
+                <option value="Not Active">Not Active</option>
+            </select>
+        </label><br>
+        <label>Modus Operandi:<textarea type="text" name="modusOperandi"></textarea> </label><br>
+        <label>FIR Number: <input type="text" name="crimeFirNumber" required></label><br>
+        <label>Bail Details: <input type="text" name="bailDetails"></label><br>
+        <label>Bail Grant Date: <input type="date" name="bailGrantDate"></label><br>
+        <label>TrialProgress: <input type="text" name="progress"></label><br>
+        <label>Victim Name: <input type="text" name="victimDetails"></label><br>
+
+        <button type="submit" onclick="submitCrime(event)">Submit Crime Details</button>
+    </form>
 </body>
 </html>
