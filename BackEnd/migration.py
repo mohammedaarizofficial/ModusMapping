@@ -1,6 +1,10 @@
+import threading
 import os
 from dotenv import load_dotenv
 import select
+import ollama
+
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -30,7 +34,7 @@ def fetch_postgres_data():
     cur = conn.cursor()
 
     queries = {
-        "criminals": "SELECT id, name, date_of_birth, unique_identification FROM criminal_person;",
+        "criminals": "SELECT id, name, date_of_birth, unique_identification, description FROM criminal_person;",
         "crimes": "SELECT crime_id, date, location, area, type FROM crime;",
         "crime_types": "SELECT DISTINCT type FROM crime;",
         "modus_operandi": "SELECT crime_id, modus_operandi FROM crime;",
@@ -75,8 +79,8 @@ def sync_neo4j():
         # Insert Criminals
         for criminal in data["criminals"]:
             session.run("""
-                CREATE (:Criminal {id: $id, name: $name, date_of_birth: $dob, unique_identification: $uid})
-            """, id=criminal[0], name=criminal[1], dob=str(criminal[2]), uid=criminal[3])
+                CREATE (:Criminal {id: $id, name: $name, date_of_birth: $dob, unique_identification: $uid, description :$desc})
+            """, id=criminal[0], name=criminal[1], dob=str(criminal[2]), uid=criminal[3], desc =criminal[4])
 
         # Insert Crimes
         for crime in data["crimes"]:
@@ -143,9 +147,11 @@ def sync_neo4j():
         #connections between related people
         for relation in data["related_to"]:
             session.run("""
-                MATCH (c:Criminal {id: $criminal_id}), (p:Person {id: $id})
-                MERGE (p)-[:RELATED_TO {relationship: $relationship}]->(c)
-            """, criminal_id=relation[1], id=relation[0], relationship=relation[2])
+                MATCH (c:Criminal {id: $criminal_id}), (p:Person {id: $person_id})
+                SET p.relationship = $relationship
+                MERGE (c)-[:RELATED_TO {relationship: $relationship}]->(p)
+            """, criminal_id=relation[0], person_id=relation[1], relationship=relation[2])
+
 
         # Create relationships for Crime nodes
         session.run("""
@@ -196,6 +202,16 @@ def listen_for_changes():
     cur = conn.cursor()
     cur.execute("LISTEN db_changes;")
     print("🔍 Listening for database changes...")
+    
+    def check_input():
+        """Check for user input while listening for database changes"""
+        while True:
+            name = input("\nEnter a criminal's name to search: ").strip()
+            if name:
+                summary = summarize_criminal(name)
+                print("\n🔍 Criminal Summary:\n", summary)
+
+    threading.Thread(target=check_input, daemon=True).start()
 
     try:
         while True:
@@ -211,6 +227,60 @@ def listen_for_changes():
         print("\n❌ Stopping the server...")
         cur.close()
         conn.close()
+
+def get_criminal_summary(name):
+    """Fetch criminal details from Neo4j and summarize"""
+    driver = GraphDatabase.driver(NEO4J_CONFIG["uri"], auth=(NEO4J_CONFIG["user"], NEO4J_CONFIG["password"]))
+
+    with driver.session() as session:
+        query = """
+        MATCH (c:Criminal {name: $name})
+        OPTIONAL MATCH (c)-[:COMMITTED]->(cr:Crime)
+        OPTIONAL MATCH (c)-[:RELATED_TO]->(p:Person)
+        RETURN 
+            c.name AS name, 
+            c.date_of_birth AS dob, 
+            c.unique_identification AS uid, 
+            c.description AS desc,
+            COLLECT(DISTINCT {crime_id: cr.crime_id, type: cr.type, location: cr.location, date: cr.date}) AS crimes,
+            COLLECT(DISTINCT {person: p.name, relation: p.relationship}) AS relations
+        """
+
+        result = session.run(query, name=name)
+        data = result.single()
+
+    driver.close()
+    
+    if data:
+        return {
+            "name": data["name"],
+            "date_of_birth": data["dob"],
+            "unique_id": data["uid"],
+            "description": data["desc"],
+            "crimes": data["crimes"],
+            "relations": data["relations"]
+        }
+    return None
+
+        
+def summarize_criminal(name):
+    """Use Ollama to summarize criminal details"""
+    details = get_criminal_summary(name)
+    if not details:
+        return f"No data found for {name}."
+
+    prompt = f"""
+    Generate a detailed summary of the criminal.
+    Name: {details['name']}
+    Date of Birth: {details['date_of_birth']}
+    Unique ID: {details['unique_id']}
+    Physical Attributes: {details['description']}
+    Crimes: {details['crimes']}
+    Relations: {details['relations']}
+    """
+
+    response = ollama.chat(model="mistral", messages=[{"role": "user", "content": prompt}])
+    return response["message"]["content"]
 
 
 if __name__ == "__main__":
