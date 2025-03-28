@@ -236,3 +236,26 @@ td {
     cursor: pointer;
     border: none;
 }
+
+.details{
+    margin-left: 60px;
+}
+
+.title{
+    color: rgba(255, 255, 255, 0.70);
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    margin-bottom: 8px;
+}
+
+.summarydetails{    
+    color: rgba(255, 255, 255, 0.70);
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    width: 601px;
+
+}
