@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Tamil Nadu Police - Criminal & Crime Record</title>
+    <style>
+        :root {
+            --primary-blue: #1e88e5;
+            --secondary-blue: #6ab7ff;
+            --dark-background: #1a1a1a;
+            --tech-gray: #2a2a2a;
+            --tech-border: #3c3c3c;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background: linear-gradient(135deg, #121212, #1c1c1c, #242424);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            perspective: 1000px;
+        }
+
+        @keyframes gradientBG {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(circle at center, rgba(30, 136, 229, 0.1), transparent 50%);
+            z-index: -1;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background-color: rgba(33, 105, 169, 0.402);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border-bottom:2px solid white;
+        }
+
+        .header-title h1 {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            font-size: 2rem;
+            letter-spacing: 1.5px;
+        }
+
+        .header-title h2 {
+            font-family: 'Exo 2', sans-serif;
+            margin: 10px 0 0;
+            font-size: 1rem;
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-right: 20px;
+            border-radius: 50%;
+            background-color: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            background: rgba(61, 66, 78, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 
+                0 15px 35px rgba(0,0,0,0.4),
+                0 5px 15px rgba(0,0,0,0.3);
+            margin-top: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            transform-style: preserve-3d;
+            margin-bottom: 15px;
+        }
+
+        .form-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: fit-content;
+            background: 
+                linear-gradient(
+                    0deg, 
+                    transparent, 
+                    rgba(30, 136, 229, 0.1)
+                );
+            transform: rotate(-45deg);
+            z-index: -1;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            background-color: rgba(42, 42, 42, 0.7);
+            border-radius: 10px;
+            border: 1px solid grey;
+            color: #e0e0e0;
+            font-family: 'Exo 2', sans-serif;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border:1px solid white;
+            box-shadow: 
+                0 0 15px rgba(30, 136, 229, 0.4),
+                0 0 5px rgba(30, 136, 229, 0.6);
+            border-color: var(--primary-blue);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--secondary-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(30, 136, 229, 0.4);
+        }
+
+        .person-entry {
+            background-color: rgba(42, 42, 42, 0.6);
+            border: 2px solid var(--tech-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .person-entry button {
+            background-color: #d32f2f;
+            margin-top: 10px;
+        }
+
+        .person-entry button:hover {
+            background-color: #ff1744;
+        }
+
+        h2, h3 {
+            color: var(--primary-blue);
+            text-align: center;
+        }
+
+        #status{
+            height:35px;
+        }
+    </style>
+    <script>
+        // JavaScript remains the same as in the previous versions
+        function addPersonField() {
+            const container = document.getElementById("peopleContainer");
+
+            const div = document.createElement("div");
+            div.classList.add("person-entry");
+
+            div.innerHTML = `
+                <label>Name: <input type="text" name="personName[]" required></label>
+                <label>Date Of Birth: <input type="date" name="personDob[]" required></label>
+                <label>Relationship: <input type="text" name="relation[]" required></label>
+                <button type="button" onclick="removePersonField(this)">Remove</button>
+                <br><br>
+            `;
+
+            container.appendChild(div);
+        }
+
+        function removePersonField(button) {
+            button.parentElement.remove();
+        }
+
+        function submitCriminal(event) {
+            event.preventDefault();
+
+            const formData = new FormData(document.getElementById("criminalForm"));
+            
+            let criminalData = {
+                name: formData.get("name"),
+                dob: formData.get("dob"),
+                description: formData.get("description"),
+                uniqueIdentifier: formData.get("uniqueIdentifier"),
+                firNumber: formData.get("firNumber"),
+                people: []
+            };
+
+            const personNames = formData.getAll("personName[]");
+            const personDobs = formData.getAll("personDob[]");
+            const relations = formData.getAll("relation[]");
+
+            for (let i = 0; i < personNames.length; i++) {
+                criminalData.people.push({
+                    personName: personNames[i],
+                    personDob: personDobs[i],
+                    relation: relations[i]
+                });
+            }
+            console.log(criminalData);
+            document.getElementById("criminalForm").reset();
+            document.getElementById("peopleContainer").innerHTML = "";
+            fetch("/add-criminal", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(criminalData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Criminal & Related People added successfully!");
+                } else {
+                    alert("Error adding data: " + data.error);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function submitCrime(event) {
+            event.preventDefault();
+
+            const formData = new FormData(document.getElementById("criminalForm"));
+
+            let crimeData = {
+                type: formData.get("crimeType"),
+                location: formData.get("crimeLocation"),
+                area: formData.get("area"),
+                date: formData.get("crimeDate"),
+                status: formData.get("crimeStatus"),
+                modusOperandi: formData.get("modusOperandi"),
+                firNumber: formData.get("crimeFirNumber"),
+                bailDetails: formData.get("bailDetails"),
+                bailGrantDate: formData.get("bailGrantDate"),
+                progress: formData.get("progress"),
+                victimDetails: formData.get("victimDetails")
+            };
+            console.log(crimeData);
+            document.getElementById("criminalForm").reset();
+            fetch("/add-crime", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(crimeData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Crime details added successfully!");
+                } else {
+                    alert("Error adding data: " + data.error);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</head>
+<body>
+    <div class="background-overlay"></div>
+    <div class="header">
+        <div class="logo">
+            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="white" stroke-width="2" fill="none"/>
+                <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" fill="none"/>
+            </svg>
+        </div>
+        <div class="header-title">
+            <h1>Tamil Nadu Police</h1>
+            <h2>Criminal & Crime Record Management System</h2>
+        </div>
+    </div>
+    <div class="form-container">
+        <form id="criminalForm">
+            <h2>Criminal & Crime Record Entry</h2>
+            
+            <h3>Criminal Details</h3>
+            <label>Name: <input type="text" name="name" required></label>
+            <label>Date Of Birth: <input type="date" name="dob"></label>
+            <label>Description: <input type="text" name="description" required></label>
+            <label>Unique Identifier: <input type="text" name="uniqueIdentifier" required></label>
+            <label>FIR Number: <input type="text" name="firNumber" required></label>
+            
+            <h3>Related People</h3>
+            <div id="peopleContainer"></div>
+            <button type="button" onclick="addPersonField()">Add Related Person</button>
+
+            <button type="submit" onclick="submitCriminal(event)">Submit Criminal Details</button>
+            
+            <hr>
+
+            <h3>Crime Details</h3>
+            <label>Type: <input type="text" name="crimeType" required></label>
+            <label>Location: <input type="text" name="crimeLocation" required></label>
+            <label>Area: <input type="text" name="area" required></label>
+            <label>Crime Date: <input type="date" name="crimeDate"></label>
+            <label>Status: 
+                <select name="crimeStatus" id="status">
+                    <option value="Active">Active</option>
+                    <option value="Not Active">Not Active</option>
+                </select>
+            </label>
+            <label>Modus Operandi: <textarea name="modusOperandi"></textarea></label>
+            <label>FIR Number: <input type="text" name="crimeFirNumber" required></label>
+            <label>Bail Details: <input type="text" name="bailDetails"></label>
+            <label>Bail Grant Date: <input type="date" name="bailGrantDate"></label>
+            <label>Trial Progress: <input type="text" name="progress"></label>
+            <label>Victim Name: <input type="text" name="victimDetails"></label>
+
+            <button type="submit" onclick="submitCrime(event)">Submit Crime Details</button>
+        </form>
+    </div>
+</body>
+</html>
