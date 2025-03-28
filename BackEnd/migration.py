@@ -2,7 +2,8 @@ import threading
 import os
 from dotenv import load_dotenv
 import select
-
+from sentence_transformers import SentenceTransformer
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 
@@ -105,7 +106,8 @@ def sync_neo4j():
 
         # Insert Modus Operandi
         for mo in data["modus_operandi"]:
-            session.run("CREATE (:ModusOperandi {id: $id, description: $desc})", id=mo[0], desc=mo[1])
+            embedding = model.encode(mo[1]).tolist()  # Convert to list for Neo4j
+            session.run("CREATE (:ModusOperandi {id: $id, description: $desc, embedding: $embedding})", id=mo[0], desc=mo[1],embedding=embedding)
 
         # Insert FIR
         for fir in data["fir"]:
