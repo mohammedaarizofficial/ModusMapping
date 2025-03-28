@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import select
 
 # Load environment variables from .env file
 load_dotenv()
@@ -54,7 +55,7 @@ def fetch_postgres_data():
     return data
 
 
-def push_to_neo4j():
+def sync_neo4j():
     """Push data from PostgreSQL to Neo4j"""
     driver = GraphDatabase.driver(NEO4J_CONFIG["uri"], auth=(NEO4J_CONFIG["user"], NEO4J_CONFIG["password"]))
     data = fetch_postgres_data()
@@ -63,6 +64,13 @@ def push_to_neo4j():
         # ❌ Delete all nodes and relationships
         session.run("MATCH (n) DETACH DELETE n;")
         print("🗑️ Deleted all existing nodes and relationships.")
+        result = session.run("MATCH (n) RETURN COUNT(n) AS count;")
+        count = result.single()["count"]
+        if count == 0:
+            print("✅ All nodes and relationships deleted.")
+        else:
+            print(f"⚠️ Warning: {count} nodes still exist.")
+
 
         # Insert Criminals
         for criminal in data["criminals"]:
@@ -180,7 +188,31 @@ def push_to_neo4j():
 
     driver.close()
     print("✅ Data migration completed successfully!")
+    
+def listen_for_changes():
+    """Listen for changes in PostgreSQL and sync automatically"""
+    conn = psycopg2.connect(**PG_CONFIG)
+    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    cur = conn.cursor()
+    cur.execute("LISTEN db_changes;")
+    print("🔍 Listening for database changes...")
+
+    try:
+        while True:
+            if select.select([conn], [], [], 5) == ([], [], []):
+                continue  # No change detected, keep listening
+            conn.poll()
+            while conn.notifies:
+                notify = conn.notifies.pop(0)
+                print(f"📢 Change detected: {notify.payload}, resyncing data...")
+                sync_neo4j()  # Re-sync with Neo4j
+
+    except KeyboardInterrupt:
+        print("\n❌ Stopping the server...")
+        cur.close()
+        conn.close()
 
 
 if __name__ == "__main__":
-    push_to_neo4j()
+    sync_neo4j()  # Initial sync
+    listen_for_changes()  # Start listening for changes
