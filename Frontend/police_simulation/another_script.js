@@ -1,3 +1,9 @@
+function viewMore(summary) {
+    localStorage.setItem("crimeSummary", summary);
+    window.location.href = "/Frontend/second_page/mapping.html";
+}
+
+
 async function fetchData() {
     const searchInput = document.getElementById('searchInput').value.trim();
     const selectedFilter = document.querySelector('input[name="filter"]:checked')?.value;
@@ -36,7 +42,7 @@ async function fetchData() {
                 <td>${row.date_of_birth}</td>
                 <td>${row.location}</td>
                 <td>${row.area}</td>
-                <td><button onclick="showDetails(${row.id})">View</button></td>
+                <td><button onclick="viewMore(${row.id})">View More</button></td>
             `;
             resultsTable.appendChild(tr);
         });
@@ -48,6 +54,6 @@ async function fetchData() {
 
 
 // Function to handle showing more details (can be expanded later)
-function showDetails(id) {
-    alert(`More details for Criminal ID: ${id}`);
-}
+// function showDetails(id) {
+//     alert(`More details for Criminal ID: ${id}`);
+// }
