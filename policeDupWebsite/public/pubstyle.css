@@ -1,0 +1,137 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: radial-gradient(50% 50% at 50% 50%, #124FDB 0%, #06152E 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.header {
+  width: 100%;
+  height: 81px;
+  flex-shrink: 0;
+  background: #071532;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 450px;
+}
+
+.pollogo {
+  width: 60px;
+  height: 56px;
+  flex-shrink: 0;
+  aspect-ratio: 15/14;
+  margin-left: 22px;
+}
+
+.txt {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.headertxt {
+  color: #FFF;
+  font-family: Inter;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.subtext {
+  color: #FFF;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;    
+}
+
+.form-container {
+  width: 100%;
+  max-width: 500px;
+  padding: 40px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(7, 21, 50, 0.1);
+  border: 1px solid rgba(7, 21, 50, 0.1);
+  margin: 30px auto;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  color: #333;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border: 1px solid #071532;
+  box-shadow: 0 0 0 2px rgba(7, 21, 50, 0.1);
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  margin-top: 20px;
+  background-color: #071532;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background-color: #0a1e46;
+  transform: translateY(-2px);
+}
+
+.person-entry {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 20px;
+  margin-bottom: 15px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.person-entry button {
+  background-color: #d32f2f;
+  margin-top: 10px;
+}
+
+.person-entry button:hover {
+  background-color: #b71c1c;
+}
+
+h2, h3 {
+  color: #071532;
+  text-align: center;
+}
+
+#status {
+  height: 35px;
+}
