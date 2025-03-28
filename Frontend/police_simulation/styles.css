@@ -157,6 +157,7 @@ body {
 .search-box {
     display: flex;
     align-items: center;
+    gap: 8px;
     width: 822px;
     height: 49px;
     border-radius: 8px;
@@ -236,7 +237,7 @@ td {
     cursor: pointer;
     border: none;
 }
-<<<<<<< HEAD
+
 
 .search-container {
     display: flex;
@@ -285,7 +286,7 @@ td {
 .filter-dropdown:hover .filter-options {
     display: block;
 }
-=======
+
 .details-sec{
     display: flex;
     flex-direction: row;
@@ -422,4 +423,4 @@ td {
     
 
 }
->>>>>>> origin/main
+

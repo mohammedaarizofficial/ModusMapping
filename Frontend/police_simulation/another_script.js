@@ -1,3 +1,32 @@
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const filterOptions = document.querySelectorAll("input[name='filter']");
+
+    // Function to update the placeholder based on selected filter
+    function updatePlaceholder() {
+        const selectedFilter = document.querySelector("input[name='filter']:checked")?.value;
+
+        if (selectedFilter === "criminal_id") {
+            searchInput.placeholder = "Enter Criminal ID";
+        } else if (selectedFilter === "name") {
+            searchInput.placeholder = "Enter Criminal Name";
+        } else if (selectedFilter === "fir_no") {
+            searchInput.placeholder = "Enter FIR Number";
+        } else {
+            searchInput.placeholder = "Search by Criminal Name, FIR Number, Place...";
+        }
+    }
+
+    // Attach event listeners to all radio buttons
+    filterOptions.forEach(radio => {
+        radio.addEventListener("change", updatePlaceholder);
+    });
+
+    // Ensure placeholder updates on page load
+    updatePlaceholder();
+});
+
+// Your existing fetchData function remains unchanged
 async function fetchData() {
     const searchInput = document.getElementById('searchInput').value.trim();
     const selectedFilter = document.querySelector('input[name="filter"]:checked')?.value;
@@ -21,7 +50,6 @@ async function fetchData() {
         const resultsTable = document.getElementById("resultsTable");
         resultsTable.innerHTML = ""; // Clear previous results
 
-        // Handle API returning an object instead of an array
         if (!Array.isArray(data) || data.length === 0) {
             resultsTable.innerHTML = `<tr><td colspan="7">No results found</td></tr>`;
             return;
@@ -45,7 +73,6 @@ async function fetchData() {
         console.error("Error fetching data:", error);
     }
 }
-
 
 // Function to handle showing more details (can be expanded later)
 function showDetails(id) {

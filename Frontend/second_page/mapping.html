@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crime Mapping 2
+    </title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="mapping.js"></script>
+    
+</head>
+<body>
+
+    <div class="header">
+        <img src="/Frontend/images/pol.png" alt="logo" class="pollogo">
+        <div class="txt">
+            <span class="headertxt">TAMIL NADU POLICE - CRIME MAPPING PORTAL</span>
+            <span class="subtext">Connecting Criminal Patterns and Identifying Key Relations for Efficient Crime Investigation</span>
+        </div>
+       
+    </div>
+    <div class="side-main">
+        <div class="sidebar">
+            <div class="sidebar-contents">
+                <div class="sidelog">
+                    <img src="/Frontend/images/tnlog.png" alt="tn" class="tnlogo">
+                        <div class="subtxt">
+                            <span class="sidetext1">TAMIL NADU POLICE</span>
+                            <span class="sidetext2">Crime and Criminal Tracking <br> Network & Systems (CCTNS)</span>
+                        </div>  
+                </div>
+                <button class="custom-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 21L9 18.9L4.35 20.7C4.01667 20.8333 3.70833 20.796 3.425 20.588C3.14167 20.38 3 20.1007 3 19.75V5.75C3 5.53333 3.06267 5.34167 3.188 5.175C3.31333 5.00833 3.484 4.88333 3.7 4.8L9 3L15 5.1L19.65 3.3C19.9833 3.16667 20.2917 3.20433 20.575 3.413C20.8583 3.62167 21 3.90067 21 4.25V18.25C21 18.4667 20.9377 18.6583 20.813 18.825C20.6883 18.9917 20.5173 19.1167 20.3 19.2L15 21ZM14 18.55V6.85L10 5.45V17.15L14 18.55Z" fill="white"/>
+                    </svg>
+                    Criminal Mapping
+                </button>
+            </div>                     
+        </div>
+    
+        <div class="mainbox"> 
+
+            <div class="search-container">
+                <div class="search-box">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M15.5 14H14.71L14.43 13.73C15.444 12.5541 16.0012 11.0527 16 9.5C16 8.21442 15.6188 6.95772 14.9046 5.8888C14.1903 4.81988 13.1752 3.98676 11.9874 3.49479C10.7997 3.00282 9.49279 2.87409 8.23192 3.1249C6.97104 3.3757 5.81285 3.99477 4.90381 4.90381C3.99477 5.81285 3.3757 6.97104 3.1249 8.23192C2.87409 9.49279 3.00282 10.7997 3.49479 11.9874C3.98676 13.1752 4.81988 14.1903 5.8888 14.9046C6.95772 15.6188 8.21442 16 9.5 16C11.11 16 12.59 15.41 13.73 14.43L14 14.71V15.5L19 20.49L20.49 19L15.5 14ZM9.5 14C7.01 14 5 11.99 5 9.5C5 7.01 7.01 5 9.5 5C11.99 5 14 7.01 14 9.5C14 11.99 11.99 14 9.5 14Z" fill="white"/>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search by Criminal Name, FIR Number, Place...">
+                </div>
+                <button class="search-button" onclick="fetchData()">Search Relations</button>
+            </div>
+
+           
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Criminal ID</th>
+                            <th>FIR Number</th>
+                            <th>Name</th>
+                            <th>Date of Birth</th>
+                            <th>Location</th>
+                            <th>Area</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mappedResults">
+                    
+                    </tbody>
+                </table>
+            </div>
+            <div class="details-sec">
+                <div class="details">
+                    <div class="title">Summary</div>
+                    <span class="summarydetails">Modus Operandi: Rajesh Kumar has been linked to a series of armed robberies targeting small convenience stores in suburban areas. He then threatens the store owner with a concealed weapon, usually a revolver, and demands cash and valuable good. <br> <br>  Criminal Record:Rajesh Kumar has been previously arrested in 2017 for a theft case but was released on bail. His involvement in recent robberies came to light after an investigation linked him to the crime scenes using CCTV footage from various stores. In one of the incidents, a store owner was severely injured when Kumar became agitated after the victim failed to comply with his demands quickly. The police are currently tracking his movements, and there is a reward for information leading to his arrest. Additionally, Kumar's previous association with local gangs has raised concerns about potential links to organized crime, and further investigations are ongoing to uncover deeper connections. </span>
+                </div>
+                <div class="match">
+                    <div class="match-col-1">
+                                <div class="relation-map"></div>
+
+                            <!-- Fetch from backend -->
+                            <div class="match-specification">
+                                <div class="name"><span class="match-name">Lakshay</span></div> 
+                                <div class="criminal-id" class="match-id">1112223</div>
+                            </div>
+
+                            <div class="match-specification-2">
+                                <div class="location"> <span class="match-location">Anna Nagar, Chennai</span></div>
+                                <div class="percentage"><span class="match-percentage">77% Match Percentage</span></div>
+                            </div>
+                    </div>
+                    <div class="match-col-2">
+                        <span class="match-description">Lakshay Sharma's modus operandi shares striking similarities with Rajesh Kumar's crime patterns, particularly in armed robberies targeting convenience stores. Both individuals tend to commit their crimes during late-night hours, using a concealed weapon to intimidate victims. Lakshay has been linked to multiple.....</span>
+                        <button id = "View-More" class="match-viewmore-col2"><span class="match-btn">View More</span></button>
+                    </div>
+                </div>
+                
+            </div>
+            
+
+
+        </div>
+
+    </div>
+
+</body>
+</html>
