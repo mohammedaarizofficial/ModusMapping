@@ -157,6 +157,7 @@ body {
 .search-box {
     display: flex;
     align-items: center;
+    gap: 8px;
     width: 822px;
     height: 49px;
     border-radius: 8px;
