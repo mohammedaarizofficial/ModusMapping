@@ -21,6 +21,7 @@ app.use(express.json());
 app.get('/search_criminal', async (req, res) => {
   try {
     const { criminal_id, name, fir_no } = req.query;
+    
     let query = `
       SELECT c.id, c.name, c.date_of_birth, cr.fir_no, cr.location, cr.area
       FROM criminal_person c
@@ -35,15 +36,21 @@ app.get('/search_criminal', async (req, res) => {
       query += ` AND c.id = $${values.length}`;
     }
     if (name) {
-      values.push(`%${name}%`);
-      query += ` AND c.name ILIKE $${values.length}`;
-    }
+        values.push(`%${name}%`); // Properly format the wildcard search
+        query += ` AND c.name ILIKE $${values.length}`;
+      }
+      
     if (fir_no) {
       values.push(fir_no);
       query += ` AND cr.fir_no = $${values.length}`;
     }
 
     const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "No records found." });
+    }
+
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching criminal records:', error);
@@ -51,43 +58,7 @@ app.get('/search_criminal', async (req, res) => {
   }
 });
 
+// Start server
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server running on http://localhost:${port}`);
 });
-
-// Function to search for a criminal by name and fetch crime details
-async function searchCriminal(name) {
-  try {
-    const query = `
-      SELECT c.id, c.name, c.date_of_birth, cr.fir_no, cr.location, cr.area
-      FROM criminal_person c
-      JOIN cc_mapping m ON c.id = m.criminal_id
-      JOIN crime cr ON m.crime_id = cr.crime_id
-      WHERE c.name ILIKE $1
-    `;
-    const values = [`%${name}%`];
-
-    const result = await pool.query(query, values);
-
-    if (result.rows.length === 0) {
-      console.log("No records found.");
-    } else {
-      console.log("Criminal Records Found:");
-      result.rows.forEach(row => {
-        console.log(`
-          Criminal ID: ${row.id}
-          Name: ${row.name}
-          Date of Birth: ${row.date_of_birth}
-          FIR Number: ${row.fir_no}
-          Location: ${row.location}
-          Area: ${row.area}
-        `);
-      });
-    }
-  } catch (error) {
-    console.error("Database Query Error:", error);
-  }
-}
-
-// Call the function to search for "Lakshay Kumar"
-searchCriminal("Lakshay Kumar");
