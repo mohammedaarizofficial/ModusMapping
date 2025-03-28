@@ -2,7 +2,7 @@ import threading
 import os
 from dotenv import load_dotenv
 import select
-import ollama
+
 
 
 
@@ -203,15 +203,15 @@ def listen_for_changes():
     cur.execute("LISTEN db_changes;")
     print("🔍 Listening for database changes...")
     
-    def check_input():
-        """Check for user input while listening for database changes"""
-        while True:
-            name = input("\nEnter a criminal's name to search: ").strip()
-            if name:
-                summary = summarize_criminal(name)
-                print("\n🔍 Criminal Summary:\n", summary)
+    # def check_input():
+    #     """Check for user input while listening for database changes"""
+    #     while True:
+    #         name = input("\nEnter a criminal's name to search: ").strip()
+    #         if name:
+    #             summary = summarize_criminal(name)
+    #             print("\n🔍 Criminal Summary:\n", summary)
 
-    threading.Thread(target=check_input, daemon=True).start()
+    # threading.Thread(target=check_input, daemon=True).start()
 
     try:
         while True:
@@ -228,59 +228,59 @@ def listen_for_changes():
         cur.close()
         conn.close()
 
-def get_criminal_summary(name):
-    """Fetch criminal details from Neo4j and summarize"""
-    driver = GraphDatabase.driver(NEO4J_CONFIG["uri"], auth=(NEO4J_CONFIG["user"], NEO4J_CONFIG["password"]))
+# def get_criminal_summary(name):
+#     """Fetch criminal details from Neo4j and summarize"""
+#     driver = GraphDatabase.driver(NEO4J_CONFIG["uri"], auth=(NEO4J_CONFIG["user"], NEO4J_CONFIG["password"]))
 
-    with driver.session() as session:
-        query = """
-        MATCH (c:Criminal {name: $name})
-        OPTIONAL MATCH (c)-[:COMMITTED]->(cr:Crime)
-        OPTIONAL MATCH (c)-[:RELATED_TO]->(p:Person)
-        RETURN 
-            c.name AS name, 
-            c.date_of_birth AS dob, 
-            c.unique_identification AS uid, 
-            c.description AS desc,
-            COLLECT(DISTINCT {crime_id: cr.crime_id, type: cr.type, location: cr.location, date: cr.date}) AS crimes,
-            COLLECT(DISTINCT {person: p.name, relation: p.relationship}) AS relations
-        """
+#     with driver.session() as session:
+#         query = """
+#         MATCH (c:Criminal {name: $name})
+#         OPTIONAL MATCH (c)-[:COMMITTED]->(cr:Crime)
+#         OPTIONAL MATCH (c)-[:RELATED_TO]->(p:Person)
+#         RETURN 
+#             c.name AS name, 
+#             c.date_of_birth AS dob, 
+#             c.unique_identification AS uid, 
+#             c.description AS desc,
+#             COLLECT(DISTINCT {crime_id: cr.crime_id, type: cr.type, location: cr.location, date: cr.date}) AS crimes,
+#             COLLECT(DISTINCT {person: p.name, relation: p.relationship}) AS relations
+#         """
 
-        result = session.run(query, name=name)
-        data = result.single()
+#         result = session.run(query, name=name)
+#         data = result.single()
 
-    driver.close()
+#     driver.close()
     
-    if data:
-        return {
-            "name": data["name"],
-            "date_of_birth": data["dob"],
-            "unique_id": data["uid"],
-            "description": data["desc"],
-            "crimes": data["crimes"],
-            "relations": data["relations"]
-        }
-    return None
+#     if data:
+#         return {
+#             "name": data["name"],
+#             "date_of_birth": data["dob"],
+#             "unique_id": data["uid"],
+#             "description": data["desc"],
+#             "crimes": data["crimes"],
+#             "relations": data["relations"]
+#         }
+#     return None
 
         
-def summarize_criminal(name):
-    """Use Ollama to summarize criminal details"""
-    details = get_criminal_summary(name)
-    if not details:
-        return f"No data found for {name}."
+# def summarize_criminal(name):
+#     """Use Ollama to summarize criminal details"""
+#     details = get_criminal_summary(name)
+#     if not details:
+#         return f"No data found for {name}."
 
-    prompt = f"""
-    Generate a detailed summary of the criminal.
-    Name: {details['name']}
-    Date of Birth: {details['date_of_birth']}
-    Unique ID: {details['unique_id']}
-    Physical Attributes: {details['description']}
-    Crimes: {details['crimes']}
-    Relations: {details['relations']}
-    """
+#     prompt = f"""
+#     Generate a detailed summary of the criminal.
+#     Name: {details['name']}
+#     Date of Birth: {details['date_of_birth']}
+#     Unique ID: {details['unique_id']}
+#     Physical Attributes: {details['description']}
+#     Crimes: {details['crimes']}
+#     Relations: {details['relations']}
+#     """
 
-    response = ollama.chat(model="mistral", messages=[{"role": "user", "content": prompt}])
-    return response["message"]["content"]
+#     response = ollama.chat(model="mistral", messages=[{"role": "user", "content": prompt}])
+#     return response["message"]["content"]
 
 
 if __name__ == "__main__":
