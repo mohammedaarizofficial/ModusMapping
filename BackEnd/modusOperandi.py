@@ -54,6 +54,6 @@ def query_vector_embeddings(uri, user, password, text,crime_type):
         
 
 # Example Usage
-query_text = "mary had a little lamb"
+query_text = "breached bank by breaking into glass"
 type="Robbery"
 query_vector_embeddings(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, query_text,type)

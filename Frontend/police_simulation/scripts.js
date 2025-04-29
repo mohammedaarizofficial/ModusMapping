@@ -9,9 +9,9 @@ const port = 5000;
 const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
-  database: 'postgres',
-  password: 'Aariz13518',
-  port: 1351 // Ensure this matches your DB port
+  database: 'modusmapping',
+  password: 'lakshay',
+  port: 5432 // Ensure this matches your DB port
 });
 
 app.use(cors());
@@ -68,7 +68,7 @@ app.get("/search_criminal", async (req, res) => {
     }
 });
 
-
+    
 // Start server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
